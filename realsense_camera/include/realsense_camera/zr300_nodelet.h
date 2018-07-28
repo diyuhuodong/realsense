@@ -42,6 +42,7 @@
 #include <realsense_camera/IMUInfo.h>
 #include <realsense_camera/GetIMUInfo.h>
 #include <realsense_camera/base_nodelet.h>
+#include <realsense_camera/sync_time.h>
 
 namespace realsense_camera
 {
@@ -53,6 +54,8 @@ public:
 
 protected:
   // Member Variables.
+  ImuSynchronizer imu_synchronizer_;
+  size_t angular_velocity_index_;
   ros::ServiceServer get_imu_info_;
   boost::shared_ptr<dynamic_reconfigure::Server<realsense_camera::zr300_paramsConfig>> dynamic_reconf_server_;
   bool enable_imu_;

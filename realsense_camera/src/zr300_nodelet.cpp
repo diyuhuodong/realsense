@@ -85,11 +85,12 @@ namespace realsense_camera
 
     BaseNodelet::onInit();
 
-    if (enable_imu_ == true)
+    /*if (enable_imu_ == true)
     {
       imu_thread_ =
           boost::shared_ptr<boost::thread>(new boost::thread(boost::bind(&ZR300Nodelet::publishIMU, this)));
-    }
+    }*/
+    angular_velocity_index_ = 0;
   }
 
   /*
@@ -519,7 +520,7 @@ namespace realsense_camera
   /*
    * Publish IMU.
    */
-  void ZR300Nodelet::publishIMU()
+  /*void ZR300Nodelet::publishIMU()
   {
     prev_imu_ts_ = -1;
     while (ros::ok())
@@ -566,6 +567,33 @@ namespace realsense_camera
       }
     }
     stopIMU();
+  }*/
+
+  /*
+   * Publish IMU improve.
+   */
+  void ZR300Nodelet::publishIMU()
+  {
+    prev_imu_ts_ = -1;
+
+      if (imu_publisher_.getNumSubscribers() > 0)
+      {
+        if (prev_imu_ts_ != imu_ts_)
+        {
+          sensor_msgs::Imu imu_msg = sensor_msgs::Imu();
+          imu_msg.header.stamp = ros::Time(camera_start_ts_) + ros::Duration(imu_ts_ * 0.001);
+          imu_msg.header.frame_id = imu_optical_frame_id_;
+
+          // Setting just the first element to -1.0 because device does not give orientation data
+          imu_msg.orientation_covariance[0] = -1.0;
+
+          imu_msg.angular_velocity = imu_angular_vel_;
+          imu_msg.linear_acceleration = imu_linear_accel_;
+
+          imu_publisher_.publish(imu_msg);
+          prev_imu_ts_ = imu_ts_;
+        }
+      }
   }
 
   /*
@@ -597,21 +625,54 @@ namespace realsense_camera
     {
       std::unique_lock<std::mutex> lock(imu_mutex_);
 
+      double imu_timestamp = static_cast<double>(entry.timestamp_data.timestamp);      
       if (entry.timestamp_data.source_id == RS_EVENT_IMU_GYRO)
       {
-        imu_angular_vel_.x = entry.axes[0];
-        imu_angular_vel_.y = entry.axes[1];
-        imu_angular_vel_.z = entry.axes[2];
+        //why
+        ++angular_velocity_index_;
+        if (angular_velocity_index_ < 100) {
+          return;
+        }
+
+      	std::vector<ImuSynchronizer::ImuData> imu_data;
+      	imu_synchronizer_.registerGyroMeasurement(
+          imu_timestamp,
+          Eigen::Vector3d(entry.axes[0], entry.axes[1], entry.axes[2]),
+          &imu_data);
+
+        if (imu_publisher_.getNumSubscribers() == 0) {
+          return;
+        }
+       
+      	for (const ImuSynchronizer::ImuData& item : imu_data) {
+          sensor_msgs::ImuPtr msg = boost::make_shared<sensor_msgs::Imu>();
+
+          msg->header.stamp = ros::Time(camera_start_ts_) + ros::Duration(item.timestamp * 0.001);
+
+          //msg->header.seq = entry.timestamp_data.frame_number;
+          msg->header.frame_id = imu_optical_frame_id_;
+
+          msg->angular_velocity.x = item.angular_velocity[0];
+          msg->angular_velocity.y = item.angular_velocity[1];
+          msg->angular_velocity.z = item.angular_velocity[2];
+
+          msg->linear_acceleration.x = item.acceleration[0];
+          msg->linear_acceleration.y = item.acceleration[1];
+          msg->linear_acceleration.z = item.acceleration[2];
+
+          msg->orientation_covariance[0] = -1.0;  // No orientation estimate.
+
+          imu_publisher_.publish(msg);
+        }
       }
       else if (entry.timestamp_data.source_id == RS_EVENT_IMU_ACCEL)
       {
-        imu_linear_accel_.x = entry.axes[0];
-        imu_linear_accel_.y = entry.axes[1];
-        imu_linear_accel_.z = entry.axes[2];
+      	imu_synchronizer_.registerAccelerometerMeasurement(
+          imu_timestamp,
+          Eigen::Vector3d(entry.axes[0], entry.axes[1], entry.axes[2]));
       }
-      imu_ts_ = static_cast<double>(entry.timestamp_data.timestamp);
 
-      ROS_DEBUG_STREAM(" - Motion,\t host time " << imu_ts_
+      ROS_DEBUG_STREAM(" - Motion,\t host time " << imu_timestamp
           << "\ttimestamp: " << std::setprecision(8) << (double)entry.timestamp_data.timestamp*IMU_UNITS_TO_MSEC
           << "\tsource: " << (rs::event)entry.timestamp_data.source_id
           << "\tframe_num: " << entry.timestamp_data.frame_number
