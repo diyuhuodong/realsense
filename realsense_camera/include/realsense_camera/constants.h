@@ -47,9 +47,9 @@ namespace realsense_camera
     const int COLOR_HEIGHT = 480;
     const int FISHEYE_WIDTH = 640;
     const int FISHEYE_HEIGHT = 480;
-    const int DEPTH_FPS = 60;
-    const int COLOR_FPS = 60;
-    const int FISHEYE_FPS = 60;
+    const int DEPTH_FPS = 30;
+    const int COLOR_FPS = 30;
+    const int FISHEYE_FPS = 30;
     const bool ENABLE_DEPTH = true;
     const bool ENABLE_COLOR = true;
     const bool ENABLE_IR = false;

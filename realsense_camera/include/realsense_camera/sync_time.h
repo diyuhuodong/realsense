@@ -27,9 +27,9 @@ class ImuSynchronizer {
 
     std::lock_guard<std::mutex> lock(data_mutex_);
     //CHECK_GT(timestamp, last_angular_velocity_.first);
-    if (timestamp <= last_angular_velocity_.first){
+    /*if (timestamp <= last_angular_velocity_.first){
       return;
-    }
+    }*/
     
 
     const double delta_gyro = timestamp - last_angular_velocity_.first;
@@ -65,9 +65,9 @@ class ImuSynchronizer {
       const double timestamp, const Eigen::Vector3d& data) {
     std::lock_guard<std::mutex> lock(data_mutex_);
     //CHECK_GT(timestamp, last_acc_timestamp_);
-    if (timestamp <= last_acc_timestamp_){
+    /*if (timestamp <= last_acc_timestamp_){
       return;
-    }
+    }*/
 
     acc_measurements_since_last_gyro_.emplace_back(timestamp, data);
 
