@@ -132,7 +132,7 @@ namespace realsense_camera
     }
 
     // Start dynamic reconfigure callback
-    startDynamicReconfCallback();
+    //startDynamicReconfCallback();
   }
   catch(const rs::error & e)
   {
@@ -541,24 +541,26 @@ namespace realsense_camera
     {
       std::string opt_name = rs_option_to_string(o.opt);
       bool found = false;
-
-      for (std::string param_name : dynamic_params)
+      //ROS_INFO_STREAM(nodelet_name_ << " - Prepare setting camera option: " << opt_name);
+      /*for (std::string param_name : dynamic_params)
       {
         std::transform(opt_name.begin(), opt_name.end(), opt_name.begin(), ::tolower);
         if (opt_name.compare(param_name) == 0)
         {
+          ROS_INFO_STREAM(nodelet_name_ << " - Prepare setting camera param: " << param_name);
           found = true;
           break;
         }
-      }
+      }*/
       // Skip the dynamic options and set only the static camera options.
       if (found == false)
       {
         std::string key;
         double val;
-
+        std::transform(opt_name.begin(), opt_name.end(), opt_name.begin(), ::tolower);
         if (pnh_.searchParam(opt_name, key))
         {
+          //ROS_INFO_STREAM(nodelet_name_ << " - Prepare setting camera param: " << opt_name << "key: " << key);
           double opt_val;
           pnh_.getParam(key, val);
 
