@@ -560,12 +560,12 @@ namespace realsense_camera
         std::transform(opt_name.begin(), opt_name.end(), opt_name.begin(), ::tolower);
         if (pnh_.searchParam(opt_name, key))
         {
-          //ROS_INFO_STREAM(nodelet_name_ << " - Prepare setting camera param: " << opt_name << "key: " << key);
+          //ROS_INFO_STREAM(nodelet_name_ << " - Prepare setting camera param: " << opt_name << " key: " << key);
           double opt_val;
           pnh_.getParam(key, val);
 
           // Validate and set the input values within the min-max range
-          if (val < o.min)
+          /*if (val < o.min)
           {
             opt_val = o.min;
           }
@@ -576,8 +576,9 @@ namespace realsense_camera
           else
           {
             opt_val = val;
-          }
-          ROS_INFO_STREAM(nodelet_name_ << " - Setting camera option " << opt_name << " = " << opt_val);
+          }*/
+          opt_val = val;
+          ROS_INFO_STREAM(nodelet_name_ << " - Setting camera option " << opt_name << " = " << opt_val );
           rs_set_device_option(rs_device_, o.opt, opt_val, &rs_error_);
           checkError();
         }

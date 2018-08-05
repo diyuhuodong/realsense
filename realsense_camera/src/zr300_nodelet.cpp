@@ -503,7 +503,7 @@ namespace realsense_camera
     }
     // This option is necessary to make sure the data is properly synchronized
     // inside the sensor. Keep it turned on.
-    /*rs_set_device_option(rs_device_, RS_OPTION_FISHEYE_STROBE, config.fisheye_strobe, 0);
+    rs_set_device_option(rs_device_, RS_OPTION_FISHEYE_STROBE, config.fisheye_strobe, 0);
     rs_set_device_option(rs_device_, RS_OPTION_FISHEYE_EXPOSURE,
         config.fisheye_exposure, 0);
     rs_set_device_option(rs_device_, RS_OPTION_FISHEYE_GAIN, config.fisheye_gain, 0);
@@ -516,7 +516,7 @@ namespace realsense_camera
     rs_set_device_option(rs_device_, RS_OPTION_FISHEYE_AUTO_EXPOSURE_SKIP_FRAMES,
         config.fisheye_auto_exposure_skip_frames, 0);
     rs_set_device_option(rs_device_, RS_OPTION_FRAMES_QUEUE_SIZE, config.frames_queue_size, 0);
-    rs_set_device_option(rs_device_, RS_OPTION_HARDWARE_LOGGER_ENABLED, config.hardware_logger_enabled, 0);*/
+    rs_set_device_option(rs_device_, RS_OPTION_HARDWARE_LOGGER_ENABLED, config.hardware_logger_enabled, 0);
   }
 
   /*
