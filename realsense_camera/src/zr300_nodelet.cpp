@@ -77,7 +77,7 @@ namespace realsense_camera
     unit_step_size_[RS_STREAM_INFRARED2] = sizeof(unsigned char);
 
     format_[RS_STREAM_FISHEYE] = RS_FORMAT_RAW8;
-    encoding_[RS_STREAM_FISHEYE] = sensor_msgs::image_encodings::TYPE_8UC1;
+    encoding_[RS_STREAM_FISHEYE] = sensor_msgs::image_encodings::MONO8;
     cv_type_[RS_STREAM_FISHEYE] = CV_8UC1;
     unit_step_size_[RS_STREAM_FISHEYE] = sizeof(unsigned char);
 
@@ -767,7 +767,7 @@ namespace realsense_camera
    */
   void ZR300Nodelet::publishStaticTransforms()
   {
-    BaseNodelet::publishStaticTransforms();
+    //BaseNodelet::publishStaticTransforms();
 
     tf::Quaternion q_i2io;
     tf::Quaternion q_f2fo;
@@ -778,10 +778,110 @@ namespace realsense_camera
     geometry_msgs::TransformStamped f2fo_msg;
     geometry_msgs::TransformStamped b2imu_msg;
     geometry_msgs::TransformStamped imu2imuo_msg;
+    //---    
+    // Publish transforms for the cameras
+    ROS_INFO_STREAM(nodelet_name_ << " - Publishing camera transforms (/tf_static)");
+
+    tf::Quaternion q_c2co;
+    tf::Quaternion q_d2do;
+    //tf::Quaternion q_i2io;
+    geometry_msgs::TransformStamped b2d_msg;
+    geometry_msgs::TransformStamped d2do_msg;
+    geometry_msgs::TransformStamped b2c_msg;
+    geometry_msgs::TransformStamped c2co_msg;
+    //geometry_msgs::TransformStamped b2i_msg;
+    //geometry_msgs::TransformStamped i2io_msg;
+
+    // Get the current timestamp for all static transforms
+    transform_ts_ = ros::Time::now();
+
+    // The color frame is used as the base frame.
+    // Hence no additional transformation is done from base frame to color frame.
+    b2c_msg.header.stamp = transform_ts_;
+    b2c_msg.header.frame_id = imu_frame_id_;
+    b2c_msg.child_frame_id = frame_id_[RS_STREAM_COLOR];
+    b2c_msg.transform.translation.x = 0;
+    b2c_msg.transform.translation.y = 0;
+    b2c_msg.transform.translation.z = 0;
+    b2c_msg.transform.rotation.x = 0;
+    b2c_msg.transform.rotation.y = 0;
+    b2c_msg.transform.rotation.z = 0;
+    b2c_msg.transform.rotation.w = 1;
+    static_tf_broadcaster_.sendTransform(b2c_msg);
+
+    // Transform color frame to color optical frame
+    q_c2co.setRPY(-0.0, 0.0, -0.0);
+    c2co_msg.header.stamp = transform_ts_;
+    c2co_msg.header.frame_id = frame_id_[RS_STREAM_COLOR];
+    c2co_msg.child_frame_id = optical_frame_id_[RS_STREAM_COLOR];
+    c2co_msg.transform.translation.x = 0;
+    c2co_msg.transform.translation.y = 0;
+    c2co_msg.transform.translation.z = 0;
+    c2co_msg.transform.rotation.x = q_c2co.getX();
+    c2co_msg.transform.rotation.y = q_c2co.getY();
+    c2co_msg.transform.rotation.z = q_c2co.getZ();
+    c2co_msg.transform.rotation.w = q_c2co.getW();
+    static_tf_broadcaster_.sendTransform(c2co_msg);
+
+    // Transform base frame to depth frame
+    b2d_msg.header.stamp = transform_ts_;
+    b2d_msg.header.frame_id = imu_frame_id_;
+    b2d_msg.child_frame_id = frame_id_[RS_STREAM_DEPTH];
+    b2d_msg.transform.translation.x =  color2depth_extrinsic_.translation[2];
+    b2d_msg.transform.translation.y = -color2depth_extrinsic_.translation[0];
+    b2d_msg.transform.translation.z = -color2depth_extrinsic_.translation[1];
+    b2d_msg.transform.rotation.x = 0;
+    b2d_msg.transform.rotation.y = 0;
+    b2d_msg.transform.rotation.z = 0;
+    b2d_msg.transform.rotation.w = 1;
+    static_tf_broadcaster_.sendTransform(b2d_msg);
+
+    // Transform depth frame to depth optical frame
+    q_d2do.setRPY(-0.0, 0.0, -0.0);
+    d2do_msg.header.stamp = transform_ts_;
+    d2do_msg.header.frame_id = frame_id_[RS_STREAM_DEPTH];
+    d2do_msg.child_frame_id = optical_frame_id_[RS_STREAM_DEPTH];
+    d2do_msg.transform.translation.x = 0;
+    d2do_msg.transform.translation.y = 0;
+    d2do_msg.transform.translation.z = 0;
+    d2do_msg.transform.rotation.x = q_d2do.getX();
+    d2do_msg.transform.rotation.y = q_d2do.getY();
+    d2do_msg.transform.rotation.z = q_d2do.getZ();
+    d2do_msg.transform.rotation.w = q_d2do.getW();
+    static_tf_broadcaster_.sendTransform(d2do_msg);
+
+    // Transform base frame to infrared frame
+    b2i_msg.header.stamp = transform_ts_;
+    b2i_msg.header.frame_id = imu_frame_id_;
+    b2i_msg.child_frame_id = frame_id_[RS_STREAM_INFRARED];
+    b2i_msg.transform.translation.x =  color2ir_extrinsic_.translation[2];
+    b2i_msg.transform.translation.y = -color2ir_extrinsic_.translation[0];
+    b2i_msg.transform.translation.z = -color2ir_extrinsic_.translation[1];
+    b2i_msg.transform.rotation.x = 0;
+    b2i_msg.transform.rotation.y = 0;
+    b2i_msg.transform.rotation.z = 0;
+    b2i_msg.transform.rotation.w = 1;
+    static_tf_broadcaster_.sendTransform(b2i_msg);
+
+    // Transform infrared frame to infrared optical frame
+    q_i2io.setRPY(-0.0, 0.0, -0.0);
+    i2io_msg.header.stamp = transform_ts_;
+    i2io_msg.header.frame_id = frame_id_[RS_STREAM_INFRARED];
+    i2io_msg.child_frame_id = optical_frame_id_[RS_STREAM_INFRARED];
+    i2io_msg.transform.translation.x = 0;
+    i2io_msg.transform.translation.y = 0;
+    i2io_msg.transform.translation.z = 0;
+    i2io_msg.transform.rotation.x = q_i2io.getX();
+    i2io_msg.transform.rotation.y = q_i2io.getY();
+    i2io_msg.transform.rotation.z = q_i2io.getZ();
+    i2io_msg.transform.rotation.w = q_i2io.getW();
+    static_tf_broadcaster_.sendTransform(i2io_msg);
+
+    //---
 
     // Transform base frame to infrared2 frame
     b2i_msg.header.stamp = transform_ts_;
-    b2i_msg.header.frame_id = base_frame_id_;
+    b2i_msg.header.frame_id = imu_frame_id_;
     b2i_msg.child_frame_id = frame_id_[RS_STREAM_INFRARED2];
     b2i_msg.transform.translation.x =  color2ir2_extrinsic_.translation[2];
     b2i_msg.transform.translation.y = -color2ir2_extrinsic_.translation[0];
@@ -793,7 +893,7 @@ namespace realsense_camera
     static_tf_broadcaster_.sendTransform(b2i_msg);
 
     // Transform infrared2 frame to infrared2 optical frame
-    q_i2io.setRPY(-M_PI/2, 0.0, -M_PI/2);
+    q_i2io.setRPY(-0.0, 0.0, -0.0);
     i2io_msg.header.stamp = transform_ts_;
     i2io_msg.header.frame_id = frame_id_[RS_STREAM_INFRARED2];
     i2io_msg.child_frame_id = optical_frame_id_[RS_STREAM_INFRARED2];
@@ -808,7 +908,7 @@ namespace realsense_camera
 
     // Transform base frame to fisheye frame
     b2f_msg.header.stamp = transform_ts_;
-    b2f_msg.header.frame_id = base_frame_id_;
+    b2f_msg.header.frame_id = imu_frame_id_;
     b2f_msg.child_frame_id = frame_id_[RS_STREAM_FISHEYE];
     b2f_msg.transform.translation.x =  color2fisheye_extrinsic_.translation[2];
     b2f_msg.transform.translation.y = -color2fisheye_extrinsic_.translation[0];
@@ -820,7 +920,7 @@ namespace realsense_camera
     static_tf_broadcaster_.sendTransform(b2f_msg);
 
     // Transform fisheye frame to fisheye optical frame
-    q_f2fo.setRPY(-M_PI/2, 0.0, -M_PI/2);
+    q_f2fo.setRPY(-0.0, 0.0, -0.0);
     f2fo_msg.header.stamp = transform_ts_;
     f2fo_msg.header.frame_id = frame_id_[RS_STREAM_FISHEYE];
     f2fo_msg.child_frame_id = optical_frame_id_[RS_STREAM_FISHEYE];
@@ -847,7 +947,7 @@ namespace realsense_camera
     static_tf_broadcaster_.sendTransform(b2imu_msg);
 
     // Transform imu frame to imu optical frame
-    q_imu2imuo.setRPY(-M_PI/2, 0.0, -M_PI/2);
+    q_imu2imuo.setRPY(-0.0, 0.0, -0.0);
     imu2imuo_msg.header.stamp = transform_ts_;
     imu2imuo_msg.header.frame_id = imu_frame_id_;
     imu2imuo_msg.child_frame_id = imu_optical_frame_id_;
@@ -860,6 +960,7 @@ namespace realsense_camera
     imu2imuo_msg.transform.rotation.w = q_imu2imuo.getW();
     static_tf_broadcaster_.sendTransform(imu2imuo_msg);
   }
+
 
   /*
    * Publish Dynamic transforms.

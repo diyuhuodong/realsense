@@ -986,6 +986,7 @@ namespace realsense_camera
 
       float depth_scale_meters = rs_get_device_depth_scale(rs_device_, &rs_error_);
       // Fill the PointCloud2 fields.
+      ROS_ERROR_STREAM(nodelet_name_ << "z_intrinsic.height " << z_intrinsic.height << "z_intrinsic.width" << z_intrinsic.width);
       for (int y = 0; y < z_intrinsic.height; y++)
       {
         for (int x = 0; x < z_intrinsic.width; x++)
