@@ -121,6 +121,7 @@ BaseRealSenseNode::BaseRealSenseNode(ros::NodeHandle& nodeHandle,
     _stream_name[RS2_STREAM_ACCEL] = "accel";
 
     _stream_name[RS2_STREAM_POSE] = "pose";
+	angular_velocity_index_ = 0;
 }
 
 void BaseRealSenseNode::toggleSensors(bool enabled)
@@ -1062,6 +1063,81 @@ double BaseRealSenseNode::FillImuData_LinearInterpolation(const stream_index_pai
     return that_last_data.m_time;
 }
 
+double BaseRealSenseNode::FillImuData_LinearFitting(const stream_index_pair stream_index, const BaseRealSenseNode::CIMUHistory::imuData imu_data_raw, sensor_msgs::Imu& imu_msg, int seq)
+{
+	std::unique_lock<std::mutex> lock(imu_mutex_);
+	
+	double imu_timestamp = static_cast<double>(imu_data_raw.m_time); 	 
+	if (GYRO == stream_index)
+	{
+		//why
+		++angular_velocity_index_;
+		if (angular_velocity_index_ < 100) {
+			return -1;
+		}
+	
+		std::vector<ImuSynchronizer::ImuData> imu_data;
+		imu_synchronizer_.registerGyroMeasurement(
+			imu_timestamp,
+			Eigen::Vector3d(imu_data_raw.m_reading.x, imu_data_raw.m_reading.y, imu_data_raw.m_reading.z),
+			&imu_data);
+	
+		if (_synced_imu_publisher.getNumSubscribers() == 0) {
+			return -1;
+		}
+	
+		for (const ImuSynchronizer::ImuData& item : imu_data) {
+			sensor_msgs::ImuPtr msg = boost::make_shared<sensor_msgs::Imu>();
+			msg->header.stamp = ros::Time(_ros_time_base.toSec() + item.timestamp);
+			//msg->header.stamp = ros::Time(camera_start_ts_) + ros::Duration(item.timestamp * 0.001);
+			msg->header.seq = seq
+			//msg->header.seq = entry.timestamp_data.frame_number;
+			msg->header.frame_id = _frame_id[stream_index];
+	
+			msg->angular_velocity.x = item.angular_velocity[0];
+			msg->angular_velocity.y = item.angular_velocity[1];
+			msg->angular_velocity.z = item.angular_velocity[2];
+	
+			msg->linear_acceleration.x = item.acceleration[0];
+			msg->linear_acceleration.y = item.acceleration[1];
+			msg->linear_acceleration.z = item.acceleration[2];
+	
+			msg->orientation_covariance[0] = -1.0;	// No orientation estimate.
+	
+			_synced_imu_publisher.publish(msg);
+		}
+	}
+	else if (ACCEL == stream_index)
+	{
+		imu_synchronizer_.registerAccelerometerMeasurement(
+		imu_timestamp,
+		Eigen::Vector3d(imu_data_raw.m_reading.x, imu_data_raw.m_reading.y, imu_data_raw.m_reading.z));
+	}
+	
+	ROS_DEBUG_STREAM(" - Motion,\t host time " << imu_timestamp
+		<< "\ttimestamp: " << std::setprecision(8) << (double)imu_data_raw.m_time
+		<< "\tframe_num: " << seq
+		<< "\tx: " << std::setprecision(5) <<  imu_data_raw.m_reading.x
+		<< "\ty: " << imu_data_raw.m_reading.y
+		<< "\tz: " << imu_data_raw.m_reading.z);
+
+
+    // Get timestamp that syncs all sensors.
+    /*timestamp_handler_ = [](rs::timestamp_data entry)
+    {
+        auto now = std::chrono::system_clock::now().time_since_epoch();
+        auto sys_time = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+
+        ROS_DEBUG_STREAM(" - TimeEvent, host time " << sys_time
+            << "\ttimestamp: " << std::setprecision(8) << (double)entry.timestamp*IMU_UNITS_TO_MSEC
+            << "\tsource: " << (rs::event)entry.source_id
+            << "\tframe_num: " << entry.frame_number);
+    };*/
+
+	
+    return imu_timestamp;
+}
+
 
 double BaseRealSenseNode::FillImuData_Copy(const stream_index_pair stream_index, const BaseRealSenseNode::CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg)
 {
@@ -1167,17 +1243,17 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
                     elapsed_camera_ms = FillImuData_Copy(stream_index, imu_data, imu_msg);
                     break;
                 case LINEAR_INTERPOLATION:
-                    elapsed_camera_ms = FillImuData_LinearInterpolation(stream_index, imu_data, imu_msg);
+                    elapsed_camera_ms = FillImuData_LinearFitting(stream_index, imu_data, imu_msg, seq);
                     break;
             }
             if (elapsed_camera_ms < 0)
                 break;
-            ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
-            imu_msg.header.seq = seq;
-            imu_msg.header.stamp = t;
+            //ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
+            //imu_msg.header.seq = seq;
+            //imu_msg.header.stamp = t;
             if (!(init_gyro && init_accel))
                 break;
-            _synced_imu_publisher->Publish(imu_msg);
+            //_synced_imu_publisher->Publish(imu_msg);
             ROS_DEBUG("Publish united %s stream", rs2_stream_to_string(frame.get_profile().stream_type()));
         }
         break;

@@ -4,6 +4,7 @@
 #pragma once
 
 #include "../include/realsense_node_factory.h"
+#include "../include/sync_time.h"
 #include <ddynamic_reconfigure/ddynamic_reconfigure.h>
 #include <ddynamic_reconfigure/param/dd_all_params.h>
 
@@ -18,6 +19,7 @@
 #include <queue>
 #include <mutex>
 #include <atomic>
+
 
 namespace realsense2_camera
 {
@@ -135,7 +137,8 @@ namespace realsense2_camera
         std::map<stream_index_pair, std::string> _optical_frame_id;
         std::map<stream_index_pair, std::string> _depth_aligned_frame_id;
         bool _align_depth;
-
+		ImuSynchronizer imu_synchronizer_;
+		size_t angular_velocity_index_;
         virtual void calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile);
         rs2::stream_profile getAProfile(const stream_index_pair& stream);
         tf::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
@@ -214,6 +217,7 @@ namespace realsense2_camera
         static void callback(const ddynamic_reconfigure::DDMap& map, int, rs2::options sensor);
         double FillImuData_Copy(const stream_index_pair stream_index, const CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg);
         double FillImuData_LinearInterpolation(const stream_index_pair stream_index, const CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg);
+		double FillImuData_LinearFitting(const stream_index_pair stream_index, const CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg);
         static void ConvertFromOpticalFrameToFrame(float3& data);
         void imu_callback(rs2::frame frame);
         void imu_callback_sync(rs2::frame frame, imu_sync_method sync_method=imu_sync_method::COPY);
