@@ -1104,7 +1104,7 @@ double BaseRealSenseNode::FillImuData_LinearFitting(const stream_index_pair stre
 	
 			msg->orientation_covariance[0] = -1.0;	// No orientation estimate.
 	
-			_synced_imu_publisher->publish(msg);
+			_synced_imu_publisher->Publish(msg);
 		}
 	}
 	else if (ACCEL == stream_index)
