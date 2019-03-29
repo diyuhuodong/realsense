@@ -218,7 +218,7 @@ namespace realsense2_camera
         static void callback(const ddynamic_reconfigure::DDMap& map, int, rs2::options sensor);
         double FillImuData_Copy(const stream_index_pair stream_index, const CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg);
         double FillImuData_LinearInterpolation(const stream_index_pair stream_index, const CIMUHistory::imuData imu_data, sensor_msgs::Imu& imu_msg);
-        double FillImuData_LinearFitting(const stream_index_pair stream_index, const CIMUHistory::imuData imu_data_raw, sensor_msgs::Imu& imu_msg, int seq);
+        double FillImuData_LinearFitting(const stream_index_pair stream_index, const CIMUHistory::imuData imu_data_raw, int seq);
         static void ConvertFromOpticalFrameToFrame(float3& data);
         void imu_callback(rs2::frame frame);
         void imu_callback_sync(rs2::frame frame, imu_sync_method sync_method=imu_sync_method::COPY);
