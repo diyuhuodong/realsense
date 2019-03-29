@@ -1063,7 +1063,7 @@ double BaseRealSenseNode::FillImuData_LinearInterpolation(const stream_index_pai
     return that_last_data.m_time;
 }
 
-double BaseRealSenseNode::FillImuData_LinearFitting(const stream_index_pair stream_index, const BaseRealSenseNode::CIMUHistory::imuData imu_data_raw, sensor_msgs::Imu& imu_msg, int seq)
+double BaseRealSenseNode::FillImuData_LinearFitting(const stream_index_pair stream_index, const BaseRealSenseNode::CIMUHistory::imuData imu_data_raw, int seq)
 {
 	std::unique_lock<std::mutex> lock(imu_mutex_);
 	
@@ -1087,22 +1087,23 @@ double BaseRealSenseNode::FillImuData_LinearFitting(const stream_index_pair stre
 		}
 	
 		for (const ImuSynchronizer::ImuData& item : imu_data) {
-			sensor_msgs::ImuPtr msg = boost::make_shared<sensor_msgs::Imu>();
-			msg->header.stamp = ros::Time(_ros_time_base.toSec() + item.timestamp);
+			//sensor_msgs::ImuPtr msg = boost::make_shared<sensor_msgs::Imu>();
+			sensor_msgs::Imu msg = sensor_msgs::Imu();
+			msg.header.stamp = ros::Time(_ros_time_base.toSec() + item.timestamp);
 			//msg->header.stamp = ros::Time(camera_start_ts_) + ros::Duration(item.timestamp * 0.001);
-			msg->header.seq = seq;
+			msg.header.seq = seq;
 			//msg->header.seq = entry.timestamp_data.frame_number;
-			msg->header.frame_id = _frame_id[stream_index];
+			msg.header.frame_id = _frame_id[stream_index];
 	
-			msg->angular_velocity.x = item.angular_velocity[0];
-			msg->angular_velocity.y = item.angular_velocity[1];
-			msg->angular_velocity.z = item.angular_velocity[2];
+			msg.angular_velocity.x = item.angular_velocity[0];
+			msg.angular_velocity.y = item.angular_velocity[1];
+			msg.angular_velocity.z = item.angular_velocity[2];
 	
-			msg->linear_acceleration.x = item.acceleration[0];
-			msg->linear_acceleration.y = item.acceleration[1];
-			msg->linear_acceleration.z = item.acceleration[2];
+			msg.linear_acceleration.x = item.acceleration[0];
+			msg.linear_acceleration.y = item.acceleration[1];
+			msg.linear_acceleration.z = item.acceleration[2];
 	
-			msg->orientation_covariance[0] = -1.0;	// No orientation estimate.
+			msg.orientation_covariance[0] = -1.0;	// No orientation estimate.
 	
 			_synced_imu_publisher->Publish(msg);
 		}
