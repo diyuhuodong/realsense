@@ -1082,7 +1082,7 @@ double BaseRealSenseNode::FillImuData_LinearFitting(const stream_index_pair stre
 			Eigen::Vector3d(imu_data_raw.m_reading.x, imu_data_raw.m_reading.y, imu_data_raw.m_reading.z),
 			&imu_data);
 	
-		if (_synced_imu_publisher.getNumSubscribers() == 0) {
+		if (_synced_imu_publisher->getNumSubscribers() == 0) {
 			return -1;
 		}
 	
@@ -1104,7 +1104,7 @@ double BaseRealSenseNode::FillImuData_LinearFitting(const stream_index_pair stre
 	
 			msg->orientation_covariance[0] = -1.0;	// No orientation estimate.
 	
-			_synced_imu_publisher.publish(msg);
+			_synced_imu_publisher->publish(msg);
 		}
 	}
 	else if (ACCEL == stream_index)
