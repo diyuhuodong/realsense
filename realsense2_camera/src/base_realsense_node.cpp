@@ -1090,7 +1090,7 @@ double BaseRealSenseNode::FillImuData_LinearFitting(const stream_index_pair stre
 			sensor_msgs::ImuPtr msg = boost::make_shared<sensor_msgs::Imu>();
 			msg->header.stamp = ros::Time(_ros_time_base.toSec() + item.timestamp);
 			//msg->header.stamp = ros::Time(camera_start_ts_) + ros::Duration(item.timestamp * 0.001);
-			msg->header.seq = seq
+			msg->header.seq = seq;
 			//msg->header.seq = entry.timestamp_data.frame_number;
 			msg->header.frame_id = _frame_id[stream_index];
 	

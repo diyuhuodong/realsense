@@ -139,6 +139,7 @@ namespace realsense2_camera
         bool _align_depth;
 		ImuSynchronizer imu_synchronizer_;
 		size_t angular_velocity_index_;
+		std::mutex imu_mutex_;
         virtual void calcAndPublishStaticTransform(const stream_index_pair& stream, const rs2::stream_profile& base_profile);
         rs2::stream_profile getAProfile(const stream_index_pair& stream);
         tf::Quaternion rotationMatrixToQuaternion(const float rotation[9]) const;
