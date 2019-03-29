@@ -1244,9 +1244,10 @@ void BaseRealSenseNode::imu_callback_sync(rs2::frame frame, imu_sync_method sync
                     elapsed_camera_ms = FillImuData_Copy(stream_index, imu_data, imu_msg);
                     break;
                 case LINEAR_INTERPOLATION:
-                    elapsed_camera_ms = FillImuData_LinearFitting(stream_index, imu_data, imu_msg, seq);
+                    elapsed_camera_ms = FillImuData_LinearFitting(stream_index, imu_data, seq);
                     break;
             }
+			
             if (elapsed_camera_ms < 0)
                 break;
             //ros::Time t(_ros_time_base.toSec() + elapsed_camera_ms);
