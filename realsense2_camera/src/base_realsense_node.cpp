@@ -1070,6 +1070,7 @@ double BaseRealSenseNode::FillImuData_LinearFitting(const stream_index_pair stre
 	double imu_timestamp = static_cast<double>(imu_data_raw.m_time); 	 
 	if (GYRO == stream_index)
 	{
+                //ROS_INFO("gyro\n");
 		//why
 		++angular_velocity_index_;
 		if (angular_velocity_index_ < 100) {
@@ -1082,9 +1083,9 @@ double BaseRealSenseNode::FillImuData_LinearFitting(const stream_index_pair stre
 			Eigen::Vector3d(imu_data_raw.m_reading.x, imu_data_raw.m_reading.y, imu_data_raw.m_reading.z),
 			&imu_data);
 	
-		if (_synced_imu_publisher->getNumSubscribers() == 0) {
+		/*if (_synced_imu_publisher->getNumSubscribers() == 0) {
 			return -1;
-		}
+		}*/
 	
 		for (const ImuSynchronizer::ImuData& item : imu_data) {
 			//sensor_msgs::ImuPtr msg = boost::make_shared<sensor_msgs::Imu>();
@@ -1110,6 +1111,7 @@ double BaseRealSenseNode::FillImuData_LinearFitting(const stream_index_pair stre
 	}
 	else if (ACCEL == stream_index)
 	{
+                //ROS_INFO("accel\n");
 		imu_synchronizer_.registerAccelerometerMeasurement(
 		imu_timestamp,
 		Eigen::Vector3d(imu_data_raw.m_reading.x, imu_data_raw.m_reading.y, imu_data_raw.m_reading.z));
