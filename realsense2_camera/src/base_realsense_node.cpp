@@ -1065,7 +1065,7 @@ double BaseRealSenseNode::FillImuData_LinearInterpolation(const stream_index_pai
 
 double BaseRealSenseNode::FillImuData_LinearFitting(const stream_index_pair stream_index, const BaseRealSenseNode::CIMUHistory::imuData imu_data_raw, int seq)
 {
-	std::unique_lock<std::mutex> lock(imu_mutex_);
+	//std::unique_lock<std::mutex> lock(imu_mutex_);
 	
 	double imu_timestamp = static_cast<double>(imu_data_raw.m_time); 	 
 	if (GYRO == stream_index)
